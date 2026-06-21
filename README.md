@@ -1,2 +1,3 @@
-# code-explorer
-axentx product · A codebase navigation and understanding tool that uses AI to provide personalized explanations and insights for developers working with complex codebases.
+# Code Explorer
+Code Explorer is a tool that provides an interactive graph UI for exploring code.
+It features node tooltips that show summaries and links to documentation.
