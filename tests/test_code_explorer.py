@@ -1,25 +1,42 @@
 import pytest
-from code_explorer import CodeExplorer, Node
+from code_explorer import CodeExplorer
 
-@pytest.fixture
-def nodes():
-    return [
-        Node(1, "Summary 1", "https://example.com/doc1"),
-        Node(2, "Summary 2", "https://example.com/doc2"),
-    ]
+def test_add_function():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    assert "auth_login" in explorer.functions
 
-def test_get_node_tooltip(nodes):
-    explorer = CodeExplorer(nodes)
-    assert explorer.get_node_tooltip(1) == "Summary 1 (https://example.com/doc1)"
+def test_update_usage():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    explorer.update_usage("auth_login")
+    assert explorer.functions["auth_login"].usage_count == 1
 
-def test_get_node_tooltip_missing_node(nodes):
-    explorer = CodeExplorer(nodes)
-    assert explorer.get_node_tooltip(3) == ""
+def test_get_related_functions():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    related_functions = explorer.get_related_functions("auth_login")
+    assert related_functions == ["auth_register", "auth_logout"]
 
-def test_get_accessible_tooltip(nodes):
-    explorer = CodeExplorer(nodes)
-    assert explorer.get_accessible_tooltip(1) == "<div role='tooltip' aria-label='Summary 1 (https://example.com/doc1)'>Summary 1 (https://example.com/doc1)</div>"
+def test_search_functions():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    explorer.add_function("user_register", ["user_login", "user_logout"])
+    results = explorer.search_functions("auth")
+    assert "auth_login" in results
 
-def test_get_accessible_tooltip_missing_node(nodes):
-    explorer = CodeExplorer(nodes)
-    assert explorer.get_accessible_tooltip(3) == ""
+def test_rank_functions():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    explorer.update_usage("auth_register")
+    explorer.update_usage("auth_register")
+    ranked_functions = explorer.rank_functions("auth_login")
+    assert ranked_functions == ["auth_register", "auth_logout"]
+
+def test_navigate():
+    explorer = CodeExplorer()
+    explorer.add_function("auth_login", ["auth_register", "auth_logout"])
+    explorer.update_usage("auth_register")
+    explorer.update_usage("auth_register")
+    next_function = explorer.navigate("auth_login")
+    assert next_function == "auth_register"
