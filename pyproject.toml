@@ -4,8 +4,8 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "code-explorer"
-version = "0.1.0"
-description = ""
+version = "1.0.0"
+description = "A code analysis tool"
 
 [tool.poetry.dependencies]
 python = "^3.8"
