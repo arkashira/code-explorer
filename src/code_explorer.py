@@ -1,51 +1,43 @@
-import argparse
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 
 @dataclass
-class CodeAnalysis:
-    structure: str
-    purpose: str
+class Component:
+    name: str
+    description: str
+    links: List[str]
 
-def analyze_code(codebase: str) -> CodeAnalysis:
-    """
-    Simple analysis for demonstration purposes.
-    
-    Args:
-    codebase (str): The codebase to analyze.
-    
-    Returns:
-    CodeAnalysis: The analysis of the codebase.
-    """
-    if codebase is None:
-        raise AttributeError("Codebase cannot be None")
-    
-    structure = "The codebase has a simple structure."
-    purpose = "The codebase is designed to perform a specific task."
-    return CodeAnalysis(structure, purpose)
+class CodeExplorer:
+    def __init__(self, components: Dict[str, Component]):
+        self.components = components
 
-def upload_code(codebase: str) -> CodeAnalysis:
-    """
-    Simulate uploading a codebase.
-    
-    Args:
-    codebase (str): The codebase to upload.
-    
-    Returns:
-    CodeAnalysis: The analysis of the uploaded codebase.
-    """
-    return analyze_code(codebase)
+    def get_component_description(self, component_name: str) -> str:
+        component = self.components.get(component_name)
+        if component:
+            return component.description
+        return "Component not found"
 
-def main():
-    parser = argparse.ArgumentParser(description="Code Explorer")
-    parser.add_argument("--codebase", help="Path to the codebase")
-    args = parser.parse_args()
-    if args.codebase:
-        analysis = upload_code(args.codebase)
-        print(json.dumps(analysis.__dict__, indent=4))
-    else:
-        print("Please provide a codebase")
+    def get_contextual_navigation_links(self, component_name: str) -> List[str]:
+        component = self.components.get(component_name)
+        if component:
+            return component.links
+        return []
 
-if __name__ == "__main__":
-    main()
+    def get_tooltip(self, component_name: str) -> str:
+        description = self.get_component_description(component_name)
+        links = self.get_contextual_navigation_links(component_name)
+        tooltip = f"{description}\nLinks: {', '.join(links)}"
+        return tooltip
+
+def load_components_from_json(json_data: str) -> Dict[str, Component]:
+    components = {}
+    data = json.loads(json_data)
+    for component_data in data:
+        component = Component(
+            name=component_data["name"],
+            description=component_data["description"],
+            links=component_data["links"]
+        )
+        components[component.name] = component
+    return components
