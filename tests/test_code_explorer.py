@@ -1,37 +1,43 @@
+import json
+import hmac
+import hashlib
+from code_explorer import CodeExplorer, Graph
 import pytest
-from code_explorer import CodeExplorer, load_components_from_json, Component
 
-def test_get_component_description():
-    components = {
-        "component1": Component("component1", "This is component 1", ["link1", "link2"]),
-        "component2": Component("component2", "This is component 2", ["link3", "link4"])
-    }
-    explorer = CodeExplorer(components)
-    assert explorer.get_component_description("component1") == "This is component 1"
-    assert explorer.get_component_description("component3") == "Component not found"
+def test_generate_share_link():
+    explorer = CodeExplorer()
+    graph = Graph("1", "example data")
+    explorer.add_graph(graph)
+    link = explorer.generate_share_link("1")
+    assert link.startswith("http://example.com/graph/1?token=")
 
-def test_get_contextual_navigation_links():
-    components = {
-        "component1": Component("component1", "This is component 1", ["link1", "link2"]),
-        "component2": Component("component2", "This is component 2", ["link3", "link4"])
-    }
-    explorer = CodeExplorer(components)
-    assert explorer.get_contextual_navigation_links("component1") == ["link1", "link2"]
-    assert explorer.get_contextual_navigation_links("component3") == []
+def test_validate_token():
+    explorer = CodeExplorer()
+    graph = Graph("1", "example data")
+    explorer.add_graph(graph)
+    token = explorer._generate_token("1")
+    assert explorer.validate_token(token) == "1"
 
-def test_get_tooltip():
-    components = {
-        "component1": Component("component1", "This is component 1", ["link1", "link2"]),
-        "component2": Component("component2", "This is component 2", ["link3", "link4"])
-    }
-    explorer = CodeExplorer(components)
-    tooltip = explorer.get_tooltip("component1")
-    assert "This is component 1" in tooltip
-    assert "link1, link2" in tooltip
+def test_validate_token_expired():
+    explorer = CodeExplorer()
+    graph = Graph("1", "example data")
+    explorer.add_graph(graph)
+    payload = json.dumps({"graph_id": "1", "expires_at": 0}).encode()
+    signature = hmac.new(explorer.secret_key, payload, hashlib.sha256).hexdigest()
+    token = f"{payload.decode()}.{signature}"
+    assert not explorer.validate_token(token)
 
-def test_load_components_from_json():
-    json_data = '[{"name": "component1", "description": "This is component 1", "links": ["link1", "link2"]}, {"name": "component2", "description": "This is component 2", "links": ["link3", "link4"]}]'
-    components = load_components_from_json(json_data)
-    assert len(components) == 2
-    assert components["component1"].description == "This is component 1"
-    assert components["component2"].links == ["link3", "link4"]
+def test_get_graph():
+    explorer = CodeExplorer()
+    graph = Graph("1", "example data")
+    explorer.add_graph(graph)
+    token = explorer._generate_token("1")
+    retrieved_graph = explorer.get_graph("1", token)
+    assert retrieved_graph == graph
+
+def test_get_graph_invalid_token():
+    explorer = CodeExplorer()
+    graph = Graph("1", "example data")
+    explorer.add_graph(graph)
+    with pytest.raises(ValueError):
+        explorer.get_graph("1", "invalid token")
